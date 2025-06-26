@@ -76,7 +76,7 @@ if ($text == "/start") {
 
 sendMessage($chat_id, "⏳ *Aguarde...*\nConsultando seus dados...");
 
-// === CONSULTA CPF COMPLETA ===
+// === CONSULTA CPF ===
 if (strpos($text, "/cpf ") === 0) {
     $cpf = preg_replace("/\D/", "", substr($text, 5));
     $url = "https://mdzapis.com/api/consultanew?base=cpf_serasa_completo&query=$cpf&apikey=Ribeiro7";
@@ -96,7 +96,6 @@ if (strpos($text, "/cpf ") === 0) {
     $parentes = $dados['parentes'] ?? [];
     $telefones = $dados['telefones'] ?? [];
 
-    // Cálculo de idade
     $idade = '---';
     if (!empty($p['data_nascimento'])) {
         $nasc = DateTime::createFromFormat('Y-m-d', substr($p['data_nascimento'], 0, 10));
