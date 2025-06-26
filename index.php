@@ -34,23 +34,7 @@ function editMessage($message, $text, $buttons = null, $markdown = false) {
     file_get_contents($api_url . "/editMessageText?" . http_build_query($params));
 }
 
-// === Função enviar sticker
-function sendSticker($chat_id, $file_id) {
-    global $api_url;
-    $params = [
-        'chat_id' => $chat_id,
-        'sticker' => $file_id
-    ];
-    return json_decode(file_get_contents($api_url . "/sendSticker?" . http_build_query($params)), true);
-}
-
-// === Função apagar mensagem
-function deleteMessage($chat_id, $msg_id) {
-    global $api_url;
-    file_get_contents($api_url . "/deleteMessage?chat_id=$chat_id&message_id=$msg_id");
-}
-
-// === CALLBACK (botões)
+// === CALLBACK
 if (isset($update['callback_query'])) {
     $cb = $update['callback_query'];
     $chat_id = $cb['message']['chat']['id'];
@@ -115,12 +99,8 @@ if (stripos($text, '/cpf ') === 0) {
         exit;
     }
 
-    $loading = sendMessage($chat_id, "⏳ Aguarde, estou consultando...");
-    $sticker = sendSticker($chat_id, "CAACAgIAAxkBAAEOywRoXRo5yGaVEW4Ben3OzB-Ke2dcVwACFhAAAsLeQUtSJOSQDYDzbDYE");
-
-    sleep(5);
-    if (isset($sticker['result']['message_id'])) deleteMessage($chat_id, $sticker['result']['message_id']);
-    if (isset($loading['result']['message_id'])) deleteMessage($chat_id, $loading['result']['message_id']);
+    $aguarde = sendMessage($chat_id, "⏳ *Aguarde, consultando dados...*", null, true);
+    sleep(3);
 
     $api = "https://mdzapis.com/api/consultanew?base=cpf_serasa_completo&query=$cpf&apikey=Ribeiro7";
     $resp = json_decode(file_get_contents($api), true);
@@ -131,14 +111,16 @@ if (stripos($text, '/cpf ') === 0) {
         exit;
     }
 
-    $msg = "🔍 *Resultado CPF*\n\n" .
+    $msg = "*🔍 Resultado CPF*\n\n" .
         "*Nome:* {$d['nome']}\n" .
         "*Nascimento:* {$d['data_nascimento']}\n" .
         "*Sexo:* {$d['sexo']}\n" .
         "*Mãe:* {$d['nome_mae']}\n" .
         "*CPF:* {$d['cpf']}\n" .
         "*Renda:* R\$" . ($d['renda'] ?? "---") . "\n" .
-        "*Classe:* " . ($resp["poder_aquisitivo"]["PODER_AQUISITIVO"] ?? "---");
+        "*Classe:* " . ($resp["poder_aquisitivo"]["PODER_AQUISITIVO"] ?? "---") . "\n" .
+        "*Faixa:* " . ($resp["poder_aquisitivo"]["FX_PODER_AQUISITIVO"] ?? "---") . "\n\n" .
+        "🔗 [Painel do 7](https://paineldo7.rf.gd)\n`@ConsultasDo171_bot`";
 
     sendMessage($chat_id, $msg, null, true);
     exit;
@@ -156,12 +138,13 @@ if (stripos($text, '/nome ') === 0) {
         exit;
     }
 
-    $msg = "👤 *Resultado Nome*\n\n" .
+    $msg = "*👤 Resultado Nome*\n\n" .
         "*Nome:* {$r['NOME']}\n" .
         "*CPF:* {$r['CPF']}\n" .
         "*Nascimento:* {$r['NASC']}\n" .
         "*Mãe:* {$r['NOME_MAE']}\n" .
-        "*Sexo:* {$r['SEXO']}";
+        "*Sexo:* {$r['SEXO']}\n\n" .
+        "🔗 [Painel do 7](https://paineldo7.rf.gd)\n`@ConsultasDo171_bot`";
 
     sendMessage($chat_id, $msg, null, true);
     exit;
@@ -179,12 +162,13 @@ if (stripos($text, '/tel ') === 0) {
         exit;
     }
 
-    $msg = "📞 *Resultado Telefone*\n\n" .
+    $msg = "*📞 Resultado Telefone*\n\n" .
         "*Nome:* {$info['NOME']}\n" .
         "*CPF:* " . ($info['CPF'] ?? $info['doc'] ?? "---") . "\n" .
         "*Telefone:* ({$info['DDD']}) {$info['TELEFONE']}\n" .
         "*Endereço:* {$info['ENDERECO']}, {$info['NUMERO']} - {$info['BAIRRO']}\n" .
-        "*Cidade:* {$info['CIDADE']} - {$info['UF']}";
+        "*Cidade:* {$info['CIDADE']} - {$info['UF']}\n\n" .
+        "🔗 [Painel do 7](https://paineldo7.rf.gd)\n`@ConsultasDo171_bot`";
 
     sendMessage($chat_id, $msg, null, true);
     exit;
