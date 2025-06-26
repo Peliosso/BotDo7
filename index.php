@@ -5,7 +5,6 @@ $autorizados = [7926471341];
 
 $update = json_decode(file_get_contents("php://input"), true);
 
-// === Funções básicas ===
 function sendMessage($chat_id, $text, $buttons = null, $markdown = false) {
     global $api_url;
     $params = ['chat_id' => $chat_id, 'text' => $text];
@@ -58,7 +57,6 @@ function edit($text, $msg) {
     file_get_contents($api_url . "/editMessageText?" . http_build_query($params));
 }
 
-// === Callback ===
 if (isset($update['callback_query'])) {
     $cb = $update['callback_query'];
     $chat_id = $cb['message']['chat']['id'];
@@ -85,7 +83,6 @@ if (isset($update['callback_query'])) {
     exit;
 }
 
-// === Mensagem ===
 if (!isset($update['message'])) exit;
 $msg = $update['message'];
 $chat_id = $msg['chat']['id'];
@@ -104,11 +101,22 @@ if ($text == "/start") {
 
 sendMessage($chat_id, "⏳ *Aguarde...*\nConsultando seus dados...", null, true);
 
-// === CPF ===
+// === CONSULTA CPF ===
 if (strpos($text, "/cpf ") === 0) {
     $cpf = preg_replace("/\D/", "", substr($text, 5));
     $url = "https://mdzapis.com/api/consultanew?base=cpf_serasa_completo&query=$cpf&apikey=Ribeiro7";
-    $dados = json_decode(file_get_contents($url), true);
+    $resposta = file_get_contents($url);
+
+    if (!$resposta) {
+        sendMessage($chat_id, "❌ *Erro ao acessar a API.*", null, true);
+        exit;
+    }
+
+    $dados = json_decode($resposta, true);
+    if (!$dados || !isset($dados['dados_pessoais'])) {
+        sendMessage($chat_id, "❌ *CPF não encontrado ou resposta inválida.*", null, true);
+        exit;
+    }
 
     $json = json_encode([
         "status" => true,
@@ -123,11 +131,22 @@ if (strpos($text, "/cpf ") === 0) {
     exit;
 }
 
-// === Nome ===
+// === CONSULTA NOME ===
 if (strpos($text, "/nome ") === 0) {
     $nome = urlencode(trim(substr($text, 6)));
     $url = "https://mdzapis.com/api/consultanew?base=nome_completo&query=$nome&apikey=Ribeiro7";
-    $dados = json_decode(file_get_contents($url), true);
+    $resposta = file_get_contents($url);
+
+    if (!$resposta) {
+        sendMessage($chat_id, "❌ *Erro ao acessar a API.*", null, true);
+        exit;
+    }
+
+    $dados = json_decode($resposta, true);
+    if (!$dados || !isset($dados['RESULTADOS'])) {
+        sendMessage($chat_id, "❌ *Nome não encontrado ou resposta inválida.*", null, true);
+        exit;
+    }
 
     $json = json_encode([
         "status" => true,
@@ -142,11 +161,22 @@ if (strpos($text, "/nome ") === 0) {
     exit;
 }
 
-// === Telefone ===
+// === CONSULTA TELEFONE ===
 if (strpos($text, "/tel ") === 0) {
     $tel = preg_replace("/\D/", "", substr($text, 5));
     $url = "https://mdzapis.com/api/consultanew?base=consulta_telefone&query=$tel&apikey=Ribeiro7";
-    $dados = json_decode(file_get_contents($url), true);
+    $resposta = file_get_contents($url);
+
+    if (!$resposta) {
+        sendMessage($chat_id, "❌ *Erro ao acessar a API.*", null, true);
+        exit;
+    }
+
+    $dados = json_decode($resposta, true);
+    if (!$dados || !isset($dados['dados'])) {
+        sendMessage($chat_id, "❌ *Telefone não encontrado ou resposta inválida.*", null, true);
+        exit;
+    }
 
     $json = json_encode([
         "status" => true,
