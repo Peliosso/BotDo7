@@ -16,7 +16,7 @@ $query_message_id = $update->callback_query->message->message_id ?? null;
 $query_nome = $update->callback_query->message->chat->first_name ?? '';
 
 function bot($method, $parameters) {
-    $token = "SEU_TOKEN_AQUI"; // Coloque seu token aqui
+    $token = "7152860548:AAFTLPfNHBksGCudquJxNQlgWgGn2r-etUs"; // Coloque seu token aqui
     $options = [
         'http' => [
             'method'  => 'POST',
