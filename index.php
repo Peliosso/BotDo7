@@ -98,7 +98,6 @@ if (!in_array($uid, $autorizados)) {
     exit;
 }
 
-// CONSULTA CPF
 if (stripos($texto, "/cpf ") === 0) {
     $cpf = preg_replace("/\D/", "", substr($texto, 5));
     if (strlen($cpf) !== 11) {
@@ -106,9 +105,14 @@ if (stripos($texto, "/cpf ") === 0) {
         exit;
     }
 
-    $mid = animarConsulta($cid, "Consultando CPF");
+    // Envia mensagem de aguarde
+    $aguarde = animarConsulta($cid, "Consultando CPF");
+    $mid = $aguarde['message_id'];
+
+    // Executa a API
     $res = json_decode(file_get_contents("https://mdzapis.com/api/consultanew?base=cpf_serasa_completo&query=$cpf&apikey=Ribeiro7"), true);
     $d = $res['dados_pessoais'] ?? null;
+
     if (!$d) {
         editMessage($cid, $mid, "❌ CPF não encontrado.");
         exit;
