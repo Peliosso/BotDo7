@@ -54,7 +54,7 @@ function consultas($dados) {
 
     $txt = "*☆ | COMANDOS BOT Consultas do 7 | ☆*\n\n*● | STATUS 》 ONLINE*\n\n*• [CPF (1)] •*\n🟢 *CPF1:* /cpf 28536726890\n\n⚡️ Use os comandos em Grupos e no Privado do Robô\n👤 *Suporte: @RibeiroDo171*";
 
-    $button[] = ['text'=>"Voltar", "callback_data" => "start"];
+    $button[] = ['text' => "Voltar", "callback_data" => "start"];
     $menu['inline_keyboard'] = array_chunk($button, 2);
 
     bot("editMessageText", [
@@ -72,8 +72,8 @@ function tabela($dados) {
 
     $txt = "*🕵️ PLANO INDIVIDUAL*\n\n*💰 PREÇOS:*\n*1 SEMANA = R$100,00*\n\n⚠ *Apenas no privado com o bot!*";
 
-    $button[] = ['text'=>"1 SEMANA", "callback_data" => "kkk"];
-    $button[] = ['text'=>"Voltar", "callback_data" => "start"];
+    $button[] = ['text' => "1 SEMANA", "callback_data" => "kkk"];
+    $button[] = ['text' => "Voltar", "callback_data" => "start"];
     $menu['inline_keyboard'] = array_chunk($button, 2);
 
     bot("editMessageText", [
@@ -96,12 +96,8 @@ if (isset($texto) && strpos($texto, "/start") === 0) {
 if (isset($texto) && strpos($texto, "/cpf") === 0) {
     $partes = explode(" ", $texto);
     if (isset($partes[1])) {
-        if (isset($texto) && strpos($texto, "/cpf") === 0) {
-    $partes = explode(" ", $texto);
-    if (isset($partes[1])) {
         $cpf = preg_replace("/[^0-9]/", "", $partes[1]);
 
-        // Envia mensagem inicial de "aguarde"
         $aguarde = bot("sendMessage", [
             "chat_id" => $chat_id,
             "text" => "⏳ Aguarde, consultando CPF `$cpf`...",
@@ -110,14 +106,12 @@ if (isset($texto) && strpos($texto, "/cpf") === 0) {
         $aguarde = json_decode($aguarde, true);
         $msg_id_aguarde = $aguarde['result']['message_id'];
 
-        // Faz consulta
         $apiUrl = "https://mdzapis.com/api/consultanew?base=cpf_serasa_completo&query={$cpf}&apikey=Ribeiro7";
         $resposta = file_get_contents($apiUrl);
         $dados = json_decode($resposta, true);
 
         if (isset($dados["dados_pessoais"]["nome"])) {
             $info = $dados["dados_pessoais"];
-
             $nome = $info["nome"] ?? "N/A";
             $mae = $info["nome_mae"] ?? "N/A";
             $nasc = $info["data_nascimento"] ?? "N/A";
@@ -156,7 +150,6 @@ if (isset($texto) && strpos($texto, "/cpf") === 0) {
             $txt = "❌ CPF não encontrado.";
         }
 
-        // Edita a mensagem de aguarde com o resultado final
         bot("editMessageText", [
             "chat_id" => $chat_id,
             "message_id" => $msg_id_aguarde,
@@ -164,7 +157,6 @@ if (isset($texto) && strpos($texto, "/cpf") === 0) {
             "parse_mode" => "Markdown"
         ]);
     } else {
-        // Caso não digite corretamente o comando
         bot("sendMessage", [
             "chat_id" => $chat_id,
             "text" => "⚠️ Use corretamente: /cpf 00000000000",
