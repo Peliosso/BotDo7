@@ -51,7 +51,21 @@ function consultas($dados) {
     $chat_id = $dados["chat_id"];
     $message_id = $dados["query_message_id"];
 
-    $txt = "*☆ | COMANDOS BOT Consultas do 7 | ☆*\n\n*● | STATUS 》 ONLINE*\n\n*• [CPF (1)] •*\n🟢 *CPF1:* /cpf 28536726890\n\n*• [NOME] •*\n🔵 *Nome:* /nome Ewerton da Silva Ribeiro\n\n⚡️ Use os comandos em Grupos e no Privado do Robô\n👤 *Suporte: @RibeiroDo171*";
+$txt = "╭─❖ *COMANDOS | Consultas do 7* ❖─╮\n";
+$txt .= "│\n";
+$txt .= "├ 📡 *Status:* ONLINE\n";
+$txt .= "│\n";
+$txt .= "├ 📂 *Consultas disponíveis:*\n";
+$txt .= "│\n";
+$txt .= "│  🔍 *CPF (1)*\n";
+$txt .= "│   └ 🟢 Exemplo: `/cpf 28536726890`\n";
+$txt .= "│\n";
+$txt .= "│  🧾 *Nome*\n";
+$txt .= "│   └ 🔵 Exemplo: `/nome Ana Luiza Silva`\n";
+$txt .= "│\n";
+$txt .= "├ ⚡️ *Dica:* Use os comandos em grupos ou no privado do bot\n";
+$txt .= "│\n";
+$txt .= "╰ 👤 *Suporte:* @RibeiroDo171";
 
     $button[] = ['text'=>"Voltar", "callback_data" => "start"];
     $menu['inline_keyboard'] = array_chunk($button, 2);
@@ -179,6 +193,85 @@ if (isset($texto) && strpos($texto, "/cpf") === 0) {
         bot("sendMessage", [
             "chat_id" => $chat_id,
             "text" => "⚠️ Use corretamente: /cpf 00000000000",
+            "parse_mode" => "Markdown"
+        ]);
+    }
+}
+
+if (isset($texto) && strpos($texto, "/tel") === 0) {
+    $partes = explode(" ", $texto);
+    if (isset($partes[1])) {
+        $numero = preg_replace("/[^0-9]/", "", $partes[1]);
+
+        $aguarde = bot("sendMessage", [
+            "chat_id" => $chat_id,
+            "text" => "⏳ Consultando o telefone `$numero`...\n\n_Aguarde alguns segundos..._",
+            "parse_mode" => "Markdown"
+        ]);
+        $aguarde = json_decode($aguarde, true);
+        $msg_id_aguarde = $aguarde['result']['message_id'];
+
+        $apiUrl = "https://mdzapis.com/api/consultanew?base=consulta_telefone2&query={$numero}&apikey=Ribeiro7";
+        $resposta = file_get_contents($apiUrl);
+        $dados = json_decode($resposta, true);
+
+        $txt = "*📞 Resultado para:* `$numero`\n\n";
+        $resultados = [];
+
+        if (isset($dados["dados"]["serasa"]) && is_array($dados["dados"]["serasa"])) {
+            foreach ($dados["dados"]["serasa"] as $pessoa) {
+                $info = $pessoa["DADOSCPF"] ?? [];
+                $end = $pessoa["DROP"] ?? [];
+
+                $txt .= "👤 *Nome:* " . nf($info["NOME"] ?? "") . "\n";
+                $txt .= "👩‍👧 *Mãe:* " . nf($info["NOME_MAE"] ?? "") . "\n";
+                $txt .= "🪪 *CPF:* " . nf($info["CPF"] ?? "") . "\n";
+                $txt .= "📅 *Nascimento:* " . nf(substr($info["NASC"] ?? "", 0, 10)) . "\n";
+                $txt .= "⚧️ *Sexo:* " . nf($info["SEXO"] ?? "") . "\n";
+                $txt .= "📈 *Renda:* R$ " . nf($info["RENDA"] ?? "") . "\n";
+                $txt .= "🗳️ *Título Eleitor:* " . nf($info["TITULO_ELEITOR"] ?? "") . "\n";
+
+                $endereco = nf(($end["LOGR_TIPO"] ?? "R") . " " . ($end["LOGR_NOME"] ?? "") . ", " . ($end["LOGR_NUMERO"] ?? "") . " - " . ($end["BAIRRO"] ?? "") . ", " . ($end["CIDADE"] ?? "") . " - " . ($end["UF"] ?? ""));
+                $txt .= "🏠 *Endereço:* {$endereco}\n";
+                $txt .= str_repeat("━", 30) . "\n";
+            }
+        } elseif (isset($dados["dados"]["outrasDB"])) {
+            foreach ($dados["dados"]["outrasDB"] as $base => $entradas) {
+                foreach ($entradas as $item) {
+                    if (isset($item["NOME"])) {
+                        $txt .= "👤 *Nome:* " . nf($item["NOME"] ?? "") . "\n";
+                        $txt .= "🪪 *CPF:* " . nf($item["CPF"] ?? $item["CPF_CNPJ"] ?? "") . "\n";
+                        $txt .= "📅 *Nascimento:* " . nf($item["DT_NASCIMENTO"] ?? $item["BVS_DT_NASC"] ?? "") . "\n";
+                        $txt .= "📧 *Email:* " . nf($item["EMAIL"] ?? "") . "\n";
+                        $txt .= "🏠 *Endereço:* " . nf($item["ENDERECO"] ?? $item["rua"] ?? "") . ", " . nf($item["NUMERO"] ?? "") . " - " . nf($item["BAIRRO"] ?? "") . ", " . nf($item["CIDADE"] ?? "") . " - " . nf($item["UF"] ?? "") . "\n";
+                        $txt .= str_repeat("━", 30) . "\n";
+                    }
+                }
+            }
+        }
+
+        if ($txt === "*📞 Resultado para:* `$numero`\n\n") {
+            $txt .= "❌ Nenhuma informação encontrada para o número.";
+        }
+
+        $botoes['inline_keyboard'] = [
+            [
+                ['text' => '❌ Apagar', 'callback_data' => 'apagar'],
+                ['text' => 'Painel do 7', 'url' => 'https://paineldo7.rf.gd']
+            ]
+        ];
+
+        bot("editMessageText", [
+            "chat_id" => $chat_id,
+            "message_id" => $msg_id_aguarde,
+            "text" => $txt,
+            "reply_markup" => $botoes,
+            "parse_mode" => "Markdown"
+        ]);
+    } else {
+        bot("sendMessage", [
+            "chat_id" => $chat_id,
+            "text" => "⚠️ Use corretamente: /tel 11999999999",
             "parse_mode" => "Markdown"
         ]);
     }
