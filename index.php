@@ -3,11 +3,9 @@
 $input = file_get_contents('php://input');
 $update = json_decode($input);
 
-// Dados da mensagem
 $message = $update->message ?? null;
 $data = $update->callback_query->data ?? null;
 
-// Identificadores
 $chat_id = $message->chat->id ?? null;
 $message_id = $message->message_id ?? null;
 $texto = $message->text ?? null;
@@ -17,7 +15,6 @@ $query_chat_id = $update->callback_query->message->chat->id ?? null;
 $query_message_id = $update->callback_query->message->message_id ?? null;
 $query_nome = $update->callback_query->message->chat->first_name ?? '';
 
-// Função principal para interagir com a API do Telegram
 function bot($method, $parameters) {
     $token = "7152860548:AAFTLPfNHBksGCudquJxNQlgWgGn2r-etUs";
     $options = [
@@ -41,7 +38,6 @@ function start($dados) {
     $button[] = ['text' => "Consultas", 'callback_data' => "consultas"];
     $button[] = ['text' => "Tabela", 'callback_data' => "tabela"];
     $button[] = ['text' => "Suporte / Dev", 'url' => "https://t.me/RibeiroDo171"];
-
     $menu['inline_keyboard'] = array_chunk($button, 2);
 
     bot("sendMessage", [
@@ -89,7 +85,6 @@ function tabela($dados) {
     ]);
 }
 
-// Resposta ao comando /start
 if (isset($texto) && strpos($texto, "/start") === 0) {
     start([
         "chat_id" => $chat_id,
@@ -98,36 +93,86 @@ if (isset($texto) && strpos($texto, "/start") === 0) {
     ]);
 }
 
-// Resposta ao comando /cpf
 if (isset($texto) && strpos($texto, "/cpf") === 0) {
     $partes = explode(" ", $texto);
     if (isset($partes[1])) {
+        if (isset($texto) && strpos($texto, "/cpf") === 0) {
+    $partes = explode(" ", $texto);
+    if (isset($partes[1])) {
         $cpf = preg_replace("/[^0-9]/", "", $partes[1]);
+
+        // Envia mensagem inicial de "aguarde"
+        $aguarde = bot("sendMessage", [
+            "chat_id" => $chat_id,
+            "text" => "⏳ Aguarde, consultando CPF `$cpf`...",
+            "parse_mode" => "Markdown"
+        ]);
+        $aguarde = json_decode($aguarde, true);
+        $msg_id_aguarde = $aguarde['result']['message_id'];
+
+        // Faz consulta
         $apiUrl = "https://mdzapis.com/api/consultanew?base=cpf_serasa_completo&query={$cpf}&apikey=Ribeiro7";
         $resposta = file_get_contents($apiUrl);
         $dados = json_decode($resposta, true);
 
         if (isset($dados["dados_pessoais"]["nome"])) {
-            $nome = $dados["dados_pessoais"]["nome"];
-            $mae = $dados["dados_pessoais"]["nome_mae"];
-            $nasc = $dados["dados_pessoais"]["data_nascimento"];
-            $sexo = $dados["dados_pessoais"]["sexo"];
-            $txt = "*🔍 Resultado para CPF:* `$cpf`\n\n👤 *Nome:* $nome\n👩‍👧 *Mãe:* $mae\n📅 *Nascimento:* $nasc\n⚧️ *Sexo:* $sexo";
+            $info = $dados["dados_pessoais"];
+
+            $nome = $info["nome"] ?? "N/A";
+            $mae = $info["nome_mae"] ?? "N/A";
+            $nasc = $info["data_nascimento"] ?? "N/A";
+            $sexo = $info["sexo"] ?? "N/A";
+            $rg = $info["rg"] ?? "N/A";
+            $titulo = $info["titulo_eleitor"] ?? "N/A";
+            $renda = $info["renda"] ?? "N/A";
+            $nacionalidade = $info["nacionalidade"] ?? "N/A";
+
+            $emails = implode(", ", $dados["emails"] ?? []);
+            $telefones = "";
+            foreach ($dados["telefones"] as $tel) {
+                $ddd = $tel["DDD"];
+                $numero = $tel["TELEFONE"];
+                $telefones .= "📞 ($ddd) $numero\n";
+            }
+
+            $enderecos = "";
+            foreach ($dados["enderecos"] as $end) {
+                $enderecos .= "🏠 " . $end["LOGR_TIPO"] . " " . $end["LOGR_NOME"] . ", " . $end["LOGR_NUMERO"] . " - " . $end["BAIRRO"] . ", " . $end["CIDADE"] . " - " . $end["UF"] . "\n";
+            }
+
+            $txt = "*🔍 Resultado para CPF:* `$cpf`\n\n";
+            $txt .= "👤 *Nome:* $nome\n";
+            $txt .= "👩‍👧 *Mãe:* $mae\n";
+            $txt .= "📅 *Nascimento:* $nasc\n";
+            $txt .= "⚧️ *Sexo:* $sexo\n";
+            $txt .= "🪪 *RG:* $rg\n";
+            $txt .= "🗳️ *Título Eleitor:* $titulo\n";
+            $txt .= "🇧🇷 *Nacionalidade:* $nacionalidade\n";
+            $txt .= "💸 *Renda:* R$ $renda\n\n";
+            $txt .= "📬 *Endereços:*\n$enderecos\n";
+            $txt .= "📧 *Emails:*\n$emails\n\n";
+            $txt .= "📱 *Telefones:*\n$telefones";
         } else {
             $txt = "❌ CPF não encontrado.";
         }
-    } else {
-        $txt = "⚠️ Use corretamente: /cpf 00000000000";
-    }
 
-    bot("sendMessage", [
-        "chat_id" => $chat_id,
-        "text" => $txt,
-        "parse_mode" => "Markdown"
-    ]);
+        // Edita a mensagem de aguarde com o resultado final
+        bot("editMessageText", [
+            "chat_id" => $chat_id,
+            "message_id" => $msg_id_aguarde,
+            "text" => $txt,
+            "parse_mode" => "Markdown"
+        ]);
+    } else {
+        // Caso não digite corretamente o comando
+        bot("sendMessage", [
+            "chat_id" => $chat_id,
+            "text" => "⚠️ Use corretamente: /cpf 00000000000",
+            "parse_mode" => "Markdown"
+        ]);
+    }
 }
 
-// Resposta a callback buttons
 if (isset($data)) {
     $callback = explode("|", $data)[0];
     $dados = [
