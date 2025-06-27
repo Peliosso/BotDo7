@@ -16,12 +16,12 @@ $query_message_id = $update->callback_query->message->message_id ?? null;
 $query_nome = $update->callback_query->message->chat->first_name ?? '';
 
 function bot($method, $parameters) {
-    $token = "7152860548:AAFTLPfNHBksGCudquJxNQlgWgGn2r-etUs";
+    $token = "7152860548:AAFTLPfNHBksGCudquJxNQlgWgGn2r-etUs"; // <- Coloque seu token do bot aqui
     $options = [
         'http' => [
             'method'  => 'POST',
             'content' => json_encode($parameters),
-            'header'  => "Content-Type: application/json\r\nAccept: application/json\r\n"
+            'header'  => "Content-Type: application/json\r\n"
         ]
     ];
     $context = stream_context_create($options);
@@ -30,7 +30,6 @@ function bot($method, $parameters) {
 
 function start($dados) {
     $chat_id = $dados['chat_id'];
-    $message_id = $dados['message_id'];
     $nome = $dados['nome'];
 
     $txt = "🔹 *Bem-vindo {$nome}*\n\n• [Grupo - Oficial](https://t.me/MetodosDo7Gratis)\n\n_Navegue pelo menu abaixo:_";
@@ -54,7 +53,7 @@ function consultas($dados) {
 
     $txt = "*☆ | COMANDOS BOT Consultas do 7 | ☆*\n\n*● | STATUS 》 ONLINE*\n\n*• [CPF (1)] •*\n🟢 *CPF1:* /cpf 28536726890\n\n⚡️ Use os comandos em Grupos e no Privado do Robô\n👤 *Suporte: @RibeiroDo171*";
 
-    $button[] = ['text' => "Voltar", "callback_data" => "start"];
+    $button[] = ['text'=>"Voltar", "callback_data" => "start"];
     $menu['inline_keyboard'] = array_chunk($button, 2);
 
     bot("editMessageText", [
@@ -72,8 +71,8 @@ function tabela($dados) {
 
     $txt = "*🕵️ PLANO INDIVIDUAL*\n\n*💰 PREÇOS:*\n*1 SEMANA = R$100,00*\n\n⚠ *Apenas no privado com o bot!*";
 
-    $button[] = ['text' => "1 SEMANA", "callback_data" => "kkk"];
-    $button[] = ['text' => "Voltar", "callback_data" => "start"];
+    $button[] = ['text'=>"1 SEMANA", "callback_data" => "kkk"];
+    $button[] = ['text'=>"Voltar", "callback_data" => "start"];
     $menu['inline_keyboard'] = array_chunk($button, 2);
 
     bot("editMessageText", [
@@ -85,10 +84,13 @@ function tabela($dados) {
     ]);
 }
 
+function nf($dado) {
+    return empty($dado) ? "_Não encontrado._" : $dado;
+}
+
 if (isset($texto) && strpos($texto, "/start") === 0) {
     start([
         "chat_id" => $chat_id,
-        "message_id" => $message_id,
         "nome" => $nome
     ]);
 }
@@ -112,50 +114,67 @@ if (isset($texto) && strpos($texto, "/cpf") === 0) {
 
         if (isset($dados["dados_pessoais"]["nome"])) {
             $info = $dados["dados_pessoais"];
-            $nome = $info["nome"] ?? "N/A";
-            $mae = $info["nome_mae"] ?? "N/A";
-            $nasc = $info["data_nascimento"] ?? "N/A";
-            $sexo = $info["sexo"] ?? "N/A";
-            $rg = $info["rg"] ?? "N/A";
-            $titulo = $info["titulo_eleitor"] ?? "N/A";
-            $renda = $info["renda"] ?? "N/A";
-            $nacionalidade = $info["nacionalidade"] ?? "N/A";
-
-            $emails = implode(", ", $dados["emails"] ?? []);
-            $telefones = "";
-            foreach ($dados["telefones"] as $tel) {
-                $ddd = $tel["DDD"];
-                $numero = $tel["TELEFONE"];
-                $telefones .= "📞 ($ddd) $numero\n";
-            }
-
-            $enderecos = "";
-            foreach ($dados["enderecos"] as $end) {
-                $enderecos .= "🏠 " . $end["LOGR_TIPO"] . " " . $end["LOGR_NOME"] . ", " . $end["LOGR_NUMERO"] . " - " . $end["BAIRRO"] . ", " . $end["CIDADE"] . " - " . $end["UF"] . "\n";
-            }
 
             $txt = "*🔍 Resultado para CPF:* `$cpf`\n\n";
-            $txt .= "👤 *Nome:* $nome\n";
-            $txt .= "👩‍👧 *Mãe:* $mae\n";
-            $txt .= "📅 *Nascimento:* $nasc\n";
-            $txt .= "⚧️ *Sexo:* $sexo\n";
-            $txt .= "🪪 *RG:* $rg\n";
-            $txt .= "🗳️ *Título Eleitor:* $titulo\n";
-            $txt .= "🇧🇷 *Nacionalidade:* $nacionalidade\n";
-            $txt .= "💸 *Renda:* R$ $renda\n\n";
+            $txt .= "👤 *Nome:* " . nf($info["nome"] ?? "") . "\n";
+            $txt .= "👩‍👧 *Mãe:* " . nf($info["nome_mae"] ?? "") . "\n";
+            $txt .= "📅 *Nascimento:* " . nf($info["data_nascimento"] ?? "") . "\n";
+            $txt .= "⚧️ *Sexo:* " . nf($info["sexo"] ?? "") . "\n";
+            $txt .= "🪪 *RG:* " . nf($info["rg"] ?? "") . "\n";
+            $txt .= "🗳️ *Título Eleitor:* " . nf($info["titulo_eleitor"] ?? "") . "\n";
+            $txt .= "🇧🇷 *Nacionalidade:* " . nf($info["nacionalidade"] ?? "") . "\n";
+            $txt .= "💸 *Renda:* R$ " . nf($info["renda"] ?? "") . "\n\n";
+
+            // Endereços
+            $enderecos = "";
+            if (!empty($dados["enderecos"])) {
+                foreach ($dados["enderecos"] as $end) {
+                    $enderecos .= "🏠 {$end["LOGR_TIPO"]} {$end["LOGR_NOME"]}, {$end["LOGR_NUMERO"]} - {$end["BAIRRO"]}, {$end["CIDADE"]} - {$end["UF"]}\n";
+                }
+            } else {
+                $enderecos = "_Nenhum endereço encontrado._";
+            }
+
+            // Emails
+            $emails_array = $dados["emails"] ?? [];
+            $emails = count($emails_array) > 0 ? implode(", ", $emails_array) : "_Nenhum email encontrado._";
+
+            // Telefones
+            $telefones = "";
+            if (!empty($dados["telefones"])) {
+                foreach ($dados["telefones"] as $tel) {
+                    $telefones .= "📞 ({$tel["DDD"]}) {$tel["TELEFONE"]}\n";
+                }
+            } else {
+                $telefones = "_Nenhum telefone encontrado._";
+            }
+
             $txt .= "📬 *Endereços:*\n$enderecos\n";
             $txt .= "📧 *Emails:*\n$emails\n\n";
             $txt .= "📱 *Telefones:*\n$telefones";
-        } else {
-            $txt = "❌ CPF não encontrado.";
-        }
 
-        bot("editMessageText", [
-            "chat_id" => $chat_id,
-            "message_id" => $msg_id_aguarde,
-            "text" => $txt,
-            "parse_mode" => "Markdown"
-        ]);
+            $botoes['inline_keyboard'] = [
+                [
+                    ['text' => '❌ Apagar', 'callback_data' => 'apagar'],
+                    ['text' => 'Painel do 7', 'url' => 'https://paineldo7.rf.gd']
+                ]
+            ];
+
+            bot("editMessageText", [
+                "chat_id" => $chat_id,
+                "message_id" => $msg_id_aguarde,
+                "text" => $txt,
+                "reply_markup" => $botoes,
+                "parse_mode" => "Markdown"
+            ]);
+        } else {
+            bot("editMessageText", [
+                "chat_id" => $chat_id,
+                "message_id" => $msg_id_aguarde,
+                "text" => "❌ Nenhum dado encontrado para o CPF informado.",
+                "parse_mode" => "Markdown"
+            ]);
+        }
     } else {
         bot("sendMessage", [
             "chat_id" => $chat_id,
@@ -166,6 +185,14 @@ if (isset($texto) && strpos($texto, "/cpf") === 0) {
 }
 
 if (isset($data)) {
+    if ($data == "apagar") {
+        bot("deleteMessage", [
+            "chat_id" => $query_chat_id,
+            "message_id" => $query_message_id
+        ]);
+        exit;
+    }
+
     $callback = explode("|", $data)[0];
     $dados = [
         "chat_id" => $query_chat_id,
