@@ -1,184 +1,207 @@
 <?php
 
-// =======================
-// BOT TELEGRAM CPF COM BOTÕES DE EMAIL E TELEFONE
-// =======================
+define("BOT_TOKEN", "7152860548:AAFTLPfNHBksGCudquJxNQlgWgGn2r-etUs");
 
-$token = "7152860548:AAFTLPfNHBksGCudquJxNQlgWgGn2r-etUs"; // 🔒 Substitua pelo seu token do bot
-
-$update = json_decode(file_get_contents("php://input"), true);
-
-$message = $update["message"] ?? null;
-$data = $update["callback_query"]["data"] ?? null;
-$cpf_command = $message["text"] ?? null;
-
-$chat_id = $message["chat"]["id"] ?? $update["callback_query"]["message"]["chat"]["id"] ?? null;
-$message_id = $update["callback_query"]["message"]["message_id"] ?? null;
-$query_id = $update["callback_query"]["id"] ?? null;
-$query_chat_id = $update["callback_query"]["message"]["chat"]["id"] ?? null;
-
-// Função para enviar requisições para a API do Telegram
-function bot($method, $data = [])
+function bot($method, $datas = [])
 {
-    global $token;
-    $url = "https://api.telegram.org/bot$token/$method";
-
-    $options = [
-        'http' => [
-            'method' => 'POST',
-            'header' => "Content-Type:application/json\r\n",
-            'content' => json_encode($data)
-        ]
-    ];
-
-    $context = stream_context_create($options);
-    return file_get_contents($url, false, $context);
+    $url = "https://api.telegram.org/bot" . BOT_TOKEN . "/" . $method;
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $datas);
+    $res = curl_exec($ch);
+    curl_close($ch);
+    return json_decode($res, true);
 }
 
-// Função para obter dados da API
 function consultarCPF($cpf)
 {
-    $apiUrl = "https://mdzapis.com/api/consultanew?base=cpf_serasa_completo&query=$cpf&apikey=Ribeiro7";
-    $resposta = @file_get_contents($apiUrl, false, stream_context_create(['http' => ['timeout' => 10]]));
+    $url = "https://api.thugapplications.xyz/api/cpf?cpf=$cpf";
+    $resposta = file_get_contents($url);
     return json_decode($resposta, true);
 }
 
-// ==================
-// COMANDO DE CONSULTA CPF
-// ==================
-if ($cpf_command && strpos($cpf_command, "/cpf") === 0) {
-    $cpf = trim(str_replace("/cpf", "", $cpf_command));
+$update = json_decode(file_get_contents("php://input"), true);
 
-    if (empty($cpf)) {
-        bot("sendMessage", [
-            "chat_id" => $chat_id,
-            "text" => "❌ Informe um CPF para consultar. Exemplo:\n`/cpf 12345678900`",
-            "parse_mode" => "Markdown"
-        ]);
-        exit;
-    }
+if (isset($update["message"])) {
+    $message = $update["message"];
+    $text = $message["text"] ?? '';
+    $chat_id = $message["chat"]["id"];
+    $msg_id = $message["message_id"];
 
-    bot("sendMessage", [
-        "chat_id" => $chat_id,
-        "text" => "🔍 Consultando CPF: `$cpf`...",
-        "parse_mode" => "Markdown"
-    ]);
+    if (preg_match('/^\d{11}$/', $text)) {
+        $cpf = $text;
+        $dados = consultarCPF($cpf);
 
-    $dados = consultarCPF($cpf);
-
-    if (!$dados || isset($dados["erro"])) {
-        bot("sendMessage", [
-            "chat_id" => $chat_id,
-            "text" => "❌ Não foi possível consultar este CPF.",
-            "parse_mode" => "Markdown"
-        ]);
-        exit;
-    }
-
-    $nome = $dados["nome"] ?? "Não encontrado";
-    $nascimento = $dados["nascimento"] ?? "Não encontrado";
-    $sexo = $dados["sexo"] ?? "Não encontrado";
-    $mae = $dados["mae"] ?? "Não encontrado";
-    $score = $dados["score"] ?? "Não encontrado";
-
-    $endereco = $dados["endereco"] ?? [];
-    $logradouro = $endereco["logradouro"] ?? "";
-    $numero = $endereco["numero"] ?? "";
-    $bairro = $endereco["bairro"] ?? "";
-    $cidade = $endereco["cidade"] ?? "";
-    $estado = $endereco["estado"] ?? "";
-    $cep = $endereco["cep"] ?? "";
-
-    $txt = "🔍 *CPF CONSULTADO*\n\n";
-    $txt .= "👤 *Nome:* $nome\n";
-    $txt .= "🎂 *Nascimento:* $nascimento\n";
-    $txt .= "👩‍👧 *Mãe:* $mae\n";
-    $txt .= "🧬 *Sexo:* $sexo\n";
-    $txt .= "📊 *Score:* $score\n\n";
-    $txt .= "📍 *Endereço:*\n";
-    $txt .= "$logradouro, $numero\n$bairro\n$cidade - $estado\nCEP: $cep\n\n";
-    $txt .= "📧 *Emails:* Oculto\n";
-    $txt .= "📱 *Telefones:* Oculto";
-
-    $botoes = [
-        'inline_keyboard' => [
-            [
-                ['text' => '📧 Ver Emails', 'callback_data' => "ver_emails:$cpf"],
-                ['text' => '📱 Ver Telefones', 'callback_data' => "ver_telefones:$cpf"]
-            ],
-            [
-                ['text' => '❌ Apagar', 'callback_data' => 'apagar'],
-                ['text' => '🔗 Painel do 7', 'url' => 'https://paineldo7.rf.gd']
-            ]
-        ]
-    ];
-
-    bot("sendMessage", [
-        "chat_id" => $chat_id,
-        "text" => $txt,
-        "parse_mode" => "Markdown",
-        "reply_markup" => json_encode($botoes)
-    ]);
-}
-
-// ========================
-// CALLBACK: VER EMAILS
-// ========================
-if ($data && strpos($data, "ver_emails:") === 0) {
-    $cpf = str_replace("ver_emails:", "", $data);
-    $dados = consultarCPF($cpf);
-
-    $emails_array = $dados["emails"] ?? [];
-    $emails = count($emails_array) > 0 ? implode("\n📧 ", $emails_array) : "_Nenhum email encontrado._";
-
-    bot("answerCallbackQuery", [
-        "callback_query_id" => $query_id,
-        "text" => "Emails carregados",
-        "show_alert" => false
-    ]);
-
-    bot("sendMessage", [
-        "chat_id" => $query_chat_id,
-        "text" => "*📧 Emails encontrados:*\n📧 $emails",
-        "parse_mode" => "Markdown"
-    ]);
-}
-
-// ========================
-// CALLBACK: VER TELEFONES
-// ========================
-if ($data && strpos($data, "ver_telefones:") === 0) {
-    $cpf = str_replace("ver_telefones:", "", $data);
-    $dados = consultarCPF($cpf);
-
-    $telefones = "";
-    if (!empty($dados["telefones"])) {
-        foreach ($dados["telefones"] as $tel) {
-            $telefones .= "📞 ({$tel["DDD"]}) {$tel["TELEFONE"]}\n";
+        if (!$dados || empty($dados["dados_pessoais"])) {
+            bot("sendMessage", [
+                "chat_id" => $chat_id,
+                "text" => "❌ CPF inválido ou sem dados encontrados.",
+            ]);
+            exit;
         }
-    } else {
-        $telefones = "_Nenhum telefone encontrado._";
+
+        $p = $dados["dados_pessoais"];
+        $nome = $p["nome"] ?? "Não encontrado";
+        $sexo = $p["sexo"] ?? "Não encontrado";
+        $nasc = $p["data_nascimento"] ?? "Não encontrado";
+        $mae = $p["nome_mae"] ?? "Não encontrado";
+        $nacionalidade = $p["nacionalidade"] ?? "Não encontrado";
+
+        $score = $dados["score"]["CSBA"] ?? "Desconhecido";
+        $faixa = $dados["score"]["CSBA_FAIXA"] ?? "Indefinida";
+
+        $endereco = "Não encontrado";
+        if (!empty($dados["enderecos"])) {
+            $e = $dados["enderecos"][0];
+            $endereco = "{$e['LOGR_TIPO']} {$e['LOGR_NOME']}, {$e['LOGR_NUMERO']} - {$e['BAIRRO']}, {$e['CIDADE']}/{$e['UF']} - CEP: {$e['CEP']}";
+        }
+
+        $txt = "🔍 *Consulta de CPF*\n\n";
+        $txt .= "👤 *Nome:* $nome\n";
+        $txt .= "📅 *Nascimento:* $nasc\n";
+        $txt .= "🧬 *Sexo:* $sexo\n";
+        $txt .= "👩 *Mãe:* $mae\n";
+        $txt .= "🌎 *Nacionalidade:* $nacionalidade\n";
+        $txt .= "📈 *Score:* $score ($faixa)\n";
+        $txt .= "🏠 *Endereço:* $endereco\n\n";
+        $txt .= "🧩 Dados adicionais podem estar disponíveis.\nClique nos botões abaixo 👇";
+
+        $botoes = [
+            [["text" => "📞 Ver Telefones", "callback_data" => "ver_telefones:$cpf"]],
+            [["text" => "📧 Ver Emails", "callback_data" => "ver_emails:$cpf"]],
+        ];
+
+        bot("sendMessage", [
+            "chat_id" => $chat_id,
+            "text" => $txt,
+            "parse_mode" => "Markdown",
+            "reply_markup" => json_encode(["inline_keyboard" => $botoes])
+        ]);
     }
-
-    bot("answerCallbackQuery", [
-        "callback_query_id" => $query_id,
-        "text" => "Telefones carregados",
-        "show_alert" => false
-    ]);
-
-    bot("sendMessage", [
-        "chat_id" => $query_chat_id,
-        "text" => "*📱 Telefones encontrados:*\n$telefones",
-        "parse_mode" => "Markdown"
-    ]);
 }
 
-// ========================
-// CALLBACK: APAGAR MENSAGEM
-// ========================
-if ($data == "apagar") {
-    bot("deleteMessage", [
-        "chat_id" => $query_chat_id,
-        "message_id" => $message_id
-    ]);
+if (isset($update["callback_query"])) {
+    $data = $update["callback_query"]["data"];
+    $query_id = $update["callback_query"]["id"];
+    $query_chat_id = $update["callback_query"]["message"]["chat"]["id"];
+    $msg_id = $update["callback_query"]["message"]["message_id"];
+
+    // Função para montar o menu inicial
+    function menu_inicial($cpf) {
+        $p = consultarCPF($cpf)["dados_pessoais"];
+        $nome = $p["nome"] ?? "Não encontrado";
+        $sexo = $p["sexo"] ?? "Não encontrado";
+        $nasc = $p["data_nascimento"] ?? "Não encontrado";
+        $mae = $p["nome_mae"] ?? "Não encontrado";
+        $nacionalidade = $p["nacionalidade"] ?? "Não encontrado";
+
+        $dados = consultarCPF($cpf);
+        $score = $dados["score"]["CSBA"] ?? "Desconhecido";
+        $faixa = $dados["score"]["CSBA_FAIXA"] ?? "Indefinida";
+
+        $endereco = "Não encontrado";
+        if (!empty($dados["enderecos"])) {
+            $e = $dados["enderecos"][0];
+            $endereco = "{$e['LOGR_TIPO']} {$e['LOGR_NOME']}, {$e['LOGR_NUMERO']} - {$e['BAIRRO']}, {$e['CIDADE']}/{$e['UF']} - CEP: {$e['CEP']}";
+        }
+
+        $txt = "🔍 *Consulta de CPF*\n\n";
+        $txt .= "👤 *Nome:* $nome\n";
+        $txt .= "📅 *Nascimento:* $nasc\n";
+        $txt .= "🧬 *Sexo:* $sexo\n";
+        $txt .= "👩 *Mãe:* $mae\n";
+        $txt .= "🌎 *Nacionalidade:* $nacionalidade\n";
+        $txt .= "📈 *Score:* $score ($faixa)\n";
+        $txt .= "🏠 *Endereço:* $endereco\n\n";
+        $txt .= "🧩 Dados adicionais podem estar disponíveis.\nClique nos botões abaixo 👇";
+
+        $botoes = [
+            [["text" => "📞 Ver Telefones", "callback_data" => "ver_telefones:$cpf"]],
+            [["text" => "📧 Ver Emails", "callback_data" => "ver_emails:$cpf"]],
+        ];
+
+        return ["text" => $txt, "reply_markup" => json_encode(["inline_keyboard" => $botoes])];
+    }
+
+    if (strpos($data, "ver_telefones:") === 0) {
+        $cpf = str_replace("ver_telefones:", "", $data);
+        $dados = consultarCPF($cpf);
+
+        $telefones = $dados["telefones"] ?? [];
+        $texto = "📞 *Telefones encontrados:*\n\n";
+        if ($telefones) {
+            foreach ($telefones as $tel) {
+                $ddd = $tel["DDD"] ?? "";
+                $num = $tel["TELEFONE"] ?? "";
+                $texto .= "📱 ($ddd) $num\n";
+            }
+        } else {
+            $texto .= "Nenhum telefone encontrado.";
+        }
+
+        $botoes = [
+            [["text" => "🔙 Voltar", "callback_data" => "voltar:$cpf"]]
+        ];
+
+        bot("answerCallbackQuery", [
+            "callback_query_id" => $query_id,
+        ]);
+
+        bot("editMessageText", [
+            "chat_id" => $query_chat_id,
+            "message_id" => $msg_id,
+            "text" => $texto,
+            "parse_mode" => "Markdown",
+            "reply_markup" => json_encode(["inline_keyboard" => $botoes])
+        ]);
+    }
+
+    if (strpos($data, "ver_emails:") === 0) {
+        $cpf = str_replace("ver_emails:", "", $data);
+        $dados = consultarCPF($cpf);
+
+        $emails = $dados["emails"] ?? [];
+        $texto = "📧 *Emails encontrados:*\n\n";
+        if ($emails) {
+            foreach ($emails as $email) {
+                $texto .= "✉️ $email\n";
+            }
+        } else {
+            $texto .= "Nenhum email encontrado.";
+        }
+
+        $botoes = [
+            [["text" => "🔙 Voltar", "callback_data" => "voltar:$cpf"]]
+        ];
+
+        bot("answerCallbackQuery", [
+            "callback_query_id" => $query_id,
+        ]);
+
+        bot("editMessageText", [
+            "chat_id" => $query_chat_id,
+            "message_id" => $msg_id,
+            "text" => $texto,
+            "parse_mode" => "Markdown",
+            "reply_markup" => json_encode(["inline_keyboard" => $botoes])
+        ]);
+    }
+
+    if (strpos($data, "voltar:") === 0) {
+        $cpf = str_replace("voltar:", "", $data);
+        $menu = menu_inicial($cpf);
+
+        bot("answerCallbackQuery", [
+            "callback_query_id" => $query_id,
+        ]);
+
+        bot("editMessageText", [
+            "chat_id" => $query_chat_id,
+            "message_id" => $msg_id,
+            "text" => $menu["text"],
+            "parse_mode" => "Markdown",
+            "reply_markup" => $menu["reply_markup"]
+        ]);
+    }
 }
