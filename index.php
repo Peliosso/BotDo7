@@ -4,7 +4,7 @@
 // BOT TELEGRAM CPF COM BOTÕES DE EMAIL E TELEFONE
 // =======================
 
-$token = "SEU_TOKEN_AQUI"; // 🔒 Substitua pelo seu token do bot
+$token = "7152860548:AAFTLPfNHBksGCudquJxNQlgWgGn2r-etUs"; // 🔒 Substitua pelo seu token do bot
 
 $update = json_decode(file_get_contents("php://input"), true);
 
