@@ -8,6 +8,7 @@ $data = $update->callback_query->data ?? null;
 
 $chat_id = $message->chat->id ?? null;
 $message_id = $message->message_id ?? null;
+$thread_id = $message->message_thread_id ?? null;
 $texto = $message->text ?? null;
 $nome = $message->from->first_name ?? '';
 $query_id = $update->callback_query->id ?? '';
@@ -16,7 +17,13 @@ $query_message_id = $update->callback_query->message->message_id ?? null;
 $query_nome = $update->callback_query->message->chat->first_name ?? '';
 
 function bot($method, $parameters) {
-    $token = "7152860548:AAFTLPfNHBksGCudquJxNQlgWgGn2r-etUs"; // Coloque seu token aqui
+    global $thread_id;
+
+    if ($thread_id !== null && in_array($method, ['sendMessage', 'editMessageText'])) {
+        $parameters['message_thread_id'] = $thread_id;
+    }
+
+    $token = "7152860548:AAFTLPfNHBksGCudquJxNQlgWgGn2r-etUs"; // Seu token
     $options = [
         'http' => [
             'method'  => 'POST',
