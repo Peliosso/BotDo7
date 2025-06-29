@@ -198,6 +198,75 @@ if (isset($texto) && strpos($texto, "/cpf") === 0) {
     }
 }
 
+if (isset($texto) && strpos($texto, "/placa") === 0) {
+    $partes = explode(" ", $texto);
+    if (isset($partes[1])) {
+        $placa = strtoupper(preg_replace("/[^A-Z0-9]/", "", $partes[1]));
+
+        $aguarde = bot("sendMessage", [
+            "chat_id" => $chat_id,
+            "text" => "⏳ Consultando placa `$placa`...",
+            "parse_mode" => "Markdown"
+        ]);
+        $aguarde = json_decode($aguarde, true);
+        $msg_id_aguarde = $aguarde['result']['message_id'];
+
+        $apiUrl = "https://patronhost.online/apis/placa.php?placa={$placa}";
+        $resposta = file_get_contents($apiUrl);
+        $dados = json_decode($resposta, true);
+
+        if ($dados["sucesso"] ?? false) {
+            $d = $dados["dados"];
+
+            $txt = "*🚗 Resultado para Placa:* `$placa`\n\n";
+            $txt .= "📍 *UF da Placa:* " . nf($d["uf_placa"] ?? "") . "\n";
+            $txt .= "🏙️ *Município:* " . nf($d["municipio"] ?? "") . "\n";
+            $txt .= "🏷️ *Marca:* " . nf($d["marca"] ?? "") . "\n";
+            $txt .= "🚘 *Modelo:* " . nf($d["modelo"] ?? "") . "\n";
+            $txt .= "🎨 *Cor:* " . nf($d["cor_veiculo"] ?? "") . "\n";
+            $txt .= "🛢️ *Combustível:* " . nf($d["combustivel"] ?? "") . "\n";
+            $txt .= "🗓️ *Ano Fab:* " . nf($d["ano_fabricacao"] ?? "") . "\n";
+            $txt .= "🗓️ *Ano Mod:* " . nf($d["ano_modelo"] ?? "") . "\n";
+            $txt .= "🆔 *Chassi:* " . nf($d["chassi"] ?? "") . "\n";
+            $txt .= "⚙️ *Motor:* " . nf($d["motor"] ?? "") . "\n";
+            $txt .= "⚖️ *Situação Chassi:* " . nf($d["situacao_chassi"] ?? "") . "\n";
+            $txt .= "📌 *Situação Veículo:* " . nf($d["situacao_veiculo"] ?? "") . "\n\n";
+            $txt .= "🚫 *Restrições:*\n";
+            $txt .= "1️⃣ " . nf($d["restricao_1"] ?? "") . "\n";
+            $txt .= "2️⃣ " . nf($d["restricao_2"] ?? "") . "\n";
+            $txt .= "3️⃣ " . nf($d["restricao_3"] ?? "") . "\n";
+            $txt .= "4️⃣ " . nf($d["restricao_4"] ?? "") . "\n";
+
+            $botoes['inline_keyboard'] = [
+                [
+                    ['text' => '❌ Apagar', 'callback_data' => 'apagar']
+                ]
+            ];
+
+            bot("editMessageText", [
+                "chat_id" => $chat_id,
+                "message_id" => $msg_id_aguarde,
+                "text" => $txt,
+                "reply_markup" => $botoes,
+                "parse_mode" => "Markdown"
+            ]);
+        } else {
+            bot("editMessageText", [
+                "chat_id" => $chat_id,
+                "message_id" => $msg_id_aguarde,
+                "text" => "❌ Nenhum dado encontrado para a placa informada.",
+                "parse_mode" => "Markdown"
+            ]);
+        }
+    } else {
+        bot("sendMessage", [
+            "chat_id" => $chat_id,
+            "text" => "⚠️ Use corretamente: /placa ABC1234",
+            "parse_mode" => "Markdown"
+        ]);
+    }
+}
+
 if (isset($texto) && strpos($texto, "/tel") === 0) {
     $partes = explode(" ", $texto);
     if (isset($partes[1])) {
