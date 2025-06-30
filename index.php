@@ -15,45 +15,9 @@ $query_id = $update->callback_query->id ?? '';
 $query_chat_id = $update->callback_query->message->chat->id ?? null;
 $query_message_id = $update->callback_query->message->message_id ?? null;
 $query_nome = $update->callback_query->message->chat->first_name ?? '';
-$usuario_id = $message->from->id ?? $update->callback_query->from->id ?? null;
-
-// ✅ Lista de usuários autorizados (apenas quem comprou)
-$usuarios_autorizados = [-1002552180485]; // Adicione mais IDs aqui
 
 function bot($method, $parameters) {
     global $thread_id;
-
-    if ($thread_id !== null && in_array($method, ['sendMessage', 'editMessageText'])) {
-        $parameters['message_thread_id'] = $thread_id;
-    }
-
-    $token = "7152860548:AAFTLPfNHBksGCudquJxNQlgWgGn2r-etUs"; // ← Substitua pelo seu token real
-    $options = [
-        'http' => [
-            'method'  => 'POST',
-            'content' => json_encode($parameters),
-            'header'  => "Content-Type: application/json\r\n"
-        ]
-    ];
-    $context = stream_context_create($options);
-    return file_get_contents("https://api.telegram.org/bot$token/$method", false, $context);
-}
-
-// 🔐 PROTEÇÃO DE ACESSO (permite /start para todos, bloqueia o resto)
-$comando_recebido = strtolower(trim(explode(" ", $texto ?? '')[0] ?? ''));
-$comando_liberado = in_array($comando_recebido, ['/start']);
-
-if (!$comando_liberado && $usuario_id && !in_array($usuario_id, $usuarios_autorizados)) {
-    bot("sendMessage", [
-        "chat_id" => $chat_id ?? $query_chat_id,
-        "text" => "🚫 *Acesso negado!*\n\nEste bot é exclusivo para usuários autorizados.\n\nEntre em contato com @RibeiroDo171 para adquirir acesso.",
-        "parse_mode" => "Markdown"
-    ]);
-
-    // (Opcional) Log de tentativa
-    file_put_contents("tentativas.txt", date("Y-m-d H:i:s") . " - ID: $usuario_id\n", FILE_APPEND);
-    exit;
-}
 
     if ($thread_id !== null && in_array($method, ['sendMessage', 'editMessageText'])) {
         $parameters['message_thread_id'] = $thread_id;
@@ -69,6 +33,7 @@ if (!$comando_liberado && $usuario_id && !in_array($usuario_id, $usuarios_autori
     ];
     $context = stream_context_create($options);
     return file_get_contents("https://api.telegram.org/bot$token/$method", false, $context);
+}
 
 function start($dados) {
     $chat_id = $dados['chat_id'];
