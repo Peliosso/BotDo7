@@ -69,7 +69,6 @@ if (!$comando_liberado && $usuario_id && !in_array($usuario_id, $usuarios_autori
     ];
     $context = stream_context_create($options);
     return file_get_contents("https://api.telegram.org/bot$token/$method", false, $context);
-}
 
 function start($dados) {
     $chat_id = $dados['chat_id'];
