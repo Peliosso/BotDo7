@@ -18,7 +18,7 @@ $query_nome = $update->callback_query->message->chat->first_name ?? '';
 $usuario_id = $message->from->id ?? $update->callback_query->from->id ?? null;
 
 // ✅ Lista de usuários autorizados (apenas quem comprou)
-$usuarios_autorizados = [7926471341]; // Adicione mais IDs aqui
+$usuarios_autorizados = [-1002552180485]; // Adicione mais IDs aqui
 
 function bot($method, $parameters) {
     global $thread_id;
@@ -54,9 +54,6 @@ if (!$comando_liberado && $usuario_id && !in_array($usuario_id, $usuarios_autori
     file_put_contents("tentativas.txt", date("Y-m-d H:i:s") . " - ID: $usuario_id\n", FILE_APPEND);
     exit;
 }
-
-function bot($method, $parameters) {
-    global $thread_id;
 
     if ($thread_id !== null && in_array($method, ['sendMessage', 'editMessageText'])) {
         $parameters['message_thread_id'] = $thread_id;
