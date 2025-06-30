@@ -3,6 +3,8 @@
 $input = file_get_contents('php://input');
 $update = json_decode($input);
 
+$ids_permitidos = [7926471341]; // ← adicione mais IDs se quiser
+
 $message = $update->message ?? null;
 $data = $update->callback_query->data ?? null;
 
@@ -121,6 +123,16 @@ if (isset($texto) && strpos($texto, "/cpf") === 0) {
     if (isset($partes[1])) {
         $cpf = preg_replace("/[^0-9]/", "", $partes[1]);
 
+    $ids_permitidos = [7926471341]; // ← IDs autorizados
+    if (!in_array($chat_id, $ids_permitidos)) {
+        bot("sendMessage", [
+            "chat_id" => $chat_id,
+            "text" => "⚠️ Você não tem nenhum plano ativo. Adquira com: RibeiroDo171",
+            "parse_mode" => "Markdown"
+        ]);
+        exit;
+    }
+
         $aguarde = bot("sendMessage", [
             "chat_id" => $chat_id,
             "text" => "⏳ Aguarde, consultando CPF `$cpf`...",
@@ -206,6 +218,16 @@ if (isset($texto) && strpos($texto, "/cpf") === 0) {
 }
 
 if (isset($texto) && strpos($texto, "/placa") === 0) {
+    $ids_permitidos = [7926471341]; // ← IDs autorizados
+    if (!in_array($chat_id, $ids_permitidos)) {
+        bot("sendMessage", [
+            "chat_id" => $chat_id,
+            "text" => "⚠️ Você não tem nenhum plano ativo. Adquira com: RibeiroDo171",
+            "parse_mode" => "Markdown"
+        ]);
+        exit;
+    }
+
     $partes = explode(" ", $texto);
     if (isset($partes[1])) {
         $placa = strtoupper(preg_replace("/[^A-Z0-9]/", "", $partes[1]));
@@ -246,7 +268,8 @@ if (isset($texto) && strpos($texto, "/placa") === 0) {
 
             $botoes['inline_keyboard'] = [
                 [
-                    ['text' => '❌ Apagar', 'callback_data' => 'apagar']
+                    ['text' => '❌ Apagar', 'callback_data' => 'apagar'],
+                    ['text' => 'Painel do 7', 'url' => 'https://paineldo7.rf.gd']
                 ]
             ];
 
@@ -258,10 +281,18 @@ if (isset($texto) && strpos($texto, "/placa") === 0) {
                 "parse_mode" => "Markdown"
             ]);
         } else {
+            $botoes['inline_keyboard'] = [
+                [
+                    ['text' => '❌ Apagar', 'callback_data' => 'apagar'],
+                    ['text' => 'Painel do 7', 'url' => 'https://paineldo7.rf.gd']
+                ]
+            ];
+
             bot("editMessageText", [
                 "chat_id" => $chat_id,
                 "message_id" => $msg_id_aguarde,
-                "text" => "❌ Nenhum dado encontrado para a placa informada.",
+                "text" => "❌ Nenhum dado encontrado para a placa `$placa`.",
+                "reply_markup" => $botoes,
                 "parse_mode" => "Markdown"
             ]);
         }
@@ -278,6 +309,16 @@ if (isset($texto) && strpos($texto, "/tel") === 0) {
     $partes = explode(" ", $texto);
     if (isset($partes[1])) {
         $numero = preg_replace("/[^0-9]/", "", $partes[1]);
+
+    $ids_permitidos = [7926471341]; // ← IDs autorizados
+    if (!in_array($chat_id, $ids_permitidos)) {
+        bot("sendMessage", [
+            "chat_id" => $chat_id,
+            "text" => "⚠️ Você não tem nenhum plano ativo. Adquira com: RibeiroDo171",
+            "parse_mode" => "Markdown"
+        ]);
+        exit;
+    }
 
         $aguarde = bot("sendMessage", [
             "chat_id" => $chat_id,
@@ -357,6 +398,16 @@ if (isset($texto) && strpos($texto, "/nome") === 0) {
     $partes = explode(" ", $texto, 2);
     if (isset($partes[1])) {
         $nomeBusca = urlencode($partes[1]);
+
+    $ids_permitidos = [7926471341]; // ← IDs autorizados
+    if (!in_array($chat_id, $ids_permitidos)) {
+        bot("sendMessage", [
+            "chat_id" => $chat_id,
+            "text" => "⚠️ Você não tem nenhum plano ativo. Adquira com: RibeiroDo171",
+            "parse_mode" => "Markdown"
+        ]);
+        exit;
+    }
 
         $aguarde = bot("sendMessage", [
             "chat_id" => $chat_id,
