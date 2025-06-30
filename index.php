@@ -27,7 +27,7 @@ function bot($method, $parameters) {
         $parameters['message_thread_id'] = $thread_id;
     }
 
-    $token = "SEU_TOKEN_AQUI"; // ← Substitua pelo seu token real
+    $token = "7152860548:AAFTLPfNHBksGCudquJxNQlgWgGn2r-etUs"; // ← Substitua pelo seu token real
     $options = [
         'http' => [
             'method'  => 'POST',
