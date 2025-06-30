@@ -3,8 +3,6 @@
 $input = file_get_contents('php://input');
 $update = json_decode($input);
 
-$ids_permitidos = [7926471341]; // ← adicione mais IDs se quiser
-
 $message = $update->message ?? null;
 $data = $update->callback_query->data ?? null;
 
@@ -17,6 +15,45 @@ $query_id = $update->callback_query->id ?? '';
 $query_chat_id = $update->callback_query->message->chat->id ?? null;
 $query_message_id = $update->callback_query->message->message_id ?? null;
 $query_nome = $update->callback_query->message->chat->first_name ?? '';
+$usuario_id = $message->from->id ?? $update->callback_query->from->id ?? null;
+
+// ✅ Lista de usuários autorizados (apenas quem comprou)
+$usuarios_autorizados = [7926471341]; // Adicione mais IDs aqui
+
+function bot($method, $parameters) {
+    global $thread_id;
+
+    if ($thread_id !== null && in_array($method, ['sendMessage', 'editMessageText'])) {
+        $parameters['message_thread_id'] = $thread_id;
+    }
+
+    $token = "SEU_TOKEN_AQUI"; // ← Substitua pelo seu token real
+    $options = [
+        'http' => [
+            'method'  => 'POST',
+            'content' => json_encode($parameters),
+            'header'  => "Content-Type: application/json\r\n"
+        ]
+    ];
+    $context = stream_context_create($options);
+    return file_get_contents("https://api.telegram.org/bot$token/$method", false, $context);
+}
+
+// 🔐 PROTEÇÃO DE ACESSO (permite /start para todos, bloqueia o resto)
+$comando_recebido = strtolower(trim(explode(" ", $texto ?? '')[0] ?? ''));
+$comando_liberado = in_array($comando_recebido, ['/start']);
+
+if (!$comando_liberado && $usuario_id && !in_array($usuario_id, $usuarios_autorizados)) {
+    bot("sendMessage", [
+        "chat_id" => $chat_id ?? $query_chat_id,
+        "text" => "🚫 *Acesso negado!*\n\nEste bot é exclusivo para usuários autorizados.\n\nEntre em contato com @RibeiroDo171 para adquirir acesso.",
+        "parse_mode" => "Markdown"
+    ]);
+
+    // (Opcional) Log de tentativa
+    file_put_contents("tentativas.txt", date("Y-m-d H:i:s") . " - ID: $usuario_id\n", FILE_APPEND);
+    exit;
+}
 
 function bot($method, $parameters) {
     global $thread_id;
@@ -123,16 +160,6 @@ if (isset($texto) && strpos($texto, "/cpf") === 0) {
     if (isset($partes[1])) {
         $cpf = preg_replace("/[^0-9]/", "", $partes[1]);
 
-    $ids_permitidos = [7926471341]; // ← IDs autorizados
-    if (!in_array($chat_id, $ids_permitidos)) {
-        bot("sendMessage", [
-            "chat_id" => $chat_id,
-            "text" => "⚠️ Você não tem nenhum plano ativo. Adquira com: RibeiroDo171",
-            "parse_mode" => "Markdown"
-        ]);
-        exit;
-    }
-
         $aguarde = bot("sendMessage", [
             "chat_id" => $chat_id,
             "text" => "⏳ Aguarde, consultando CPF `$cpf`...",
@@ -218,16 +245,6 @@ if (isset($texto) && strpos($texto, "/cpf") === 0) {
 }
 
 if (isset($texto) && strpos($texto, "/placa") === 0) {
-    $ids_permitidos = [7926471341]; // ← IDs autorizados
-    if (!in_array($chat_id, $ids_permitidos)) {
-        bot("sendMessage", [
-            "chat_id" => $chat_id,
-            "text" => "⚠️ Você não tem nenhum plano ativo. Adquira com: RibeiroDo171",
-            "parse_mode" => "Markdown"
-        ]);
-        exit;
-    }
-
     $partes = explode(" ", $texto);
     if (isset($partes[1])) {
         $placa = strtoupper(preg_replace("/[^A-Z0-9]/", "", $partes[1]));
@@ -268,8 +285,7 @@ if (isset($texto) && strpos($texto, "/placa") === 0) {
 
             $botoes['inline_keyboard'] = [
                 [
-                    ['text' => '❌ Apagar', 'callback_data' => 'apagar'],
-                    ['text' => 'Painel do 7', 'url' => 'https://paineldo7.rf.gd']
+                    ['text' => '❌ Apagar', 'callback_data' => 'apagar']
                 ]
             ];
 
@@ -281,18 +297,10 @@ if (isset($texto) && strpos($texto, "/placa") === 0) {
                 "parse_mode" => "Markdown"
             ]);
         } else {
-            $botoes['inline_keyboard'] = [
-                [
-                    ['text' => '❌ Apagar', 'callback_data' => 'apagar'],
-                    ['text' => 'Painel do 7', 'url' => 'https://paineldo7.rf.gd']
-                ]
-            ];
-
             bot("editMessageText", [
                 "chat_id" => $chat_id,
                 "message_id" => $msg_id_aguarde,
-                "text" => "❌ Nenhum dado encontrado para a placa `$placa`.",
-                "reply_markup" => $botoes,
+                "text" => "❌ Nenhum dado encontrado para a placa informada.",
                 "parse_mode" => "Markdown"
             ]);
         }
@@ -309,16 +317,6 @@ if (isset($texto) && strpos($texto, "/tel") === 0) {
     $partes = explode(" ", $texto);
     if (isset($partes[1])) {
         $numero = preg_replace("/[^0-9]/", "", $partes[1]);
-
-    $ids_permitidos = [7926471341]; // ← IDs autorizados
-    if (!in_array($chat_id, $ids_permitidos)) {
-        bot("sendMessage", [
-            "chat_id" => $chat_id,
-            "text" => "⚠️ Você não tem nenhum plano ativo. Adquira com: RibeiroDo171",
-            "parse_mode" => "Markdown"
-        ]);
-        exit;
-    }
 
         $aguarde = bot("sendMessage", [
             "chat_id" => $chat_id,
@@ -398,16 +396,6 @@ if (isset($texto) && strpos($texto, "/nome") === 0) {
     $partes = explode(" ", $texto, 2);
     if (isset($partes[1])) {
         $nomeBusca = urlencode($partes[1]);
-
-    $ids_permitidos = [7926471341]; // ← IDs autorizados
-    if (!in_array($chat_id, $ids_permitidos)) {
-        bot("sendMessage", [
-            "chat_id" => $chat_id,
-            "text" => "⚠️ Você não tem nenhum plano ativo. Adquira com: RibeiroDo171",
-            "parse_mode" => "Markdown"
-        ]);
-        exit;
-    }
 
         $aguarde = bot("sendMessage", [
             "chat_id" => $chat_id,
