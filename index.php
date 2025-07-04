@@ -35,6 +35,13 @@ function bot($method, $parameters) {
     return file_get_contents("https://api.telegram.org/bot$token/$method", false, $context);
 }
 
+$usuarios_autorizados = [7926471341, 123456789, 987654321]; // Substitua pelos IDs reais
+
+function autorizado($chat_id) {
+    global $usuarios_autorizados;
+    return in_array($chat_id, $usuarios_autorizados);
+}
+
 function start($dados) {
     $chat_id = $dados['chat_id'];
     $nome = $dados['nome'];
@@ -275,6 +282,14 @@ if (isset($texto) && strpos($texto, "/placa") === 0) {
 }
 
 if (isset($texto) && strpos($texto, "/tel") === 0) {
+if (!autorizado($chat_id)) {
+    bot("sendMessage", [
+        "chat_id" => $chat_id,
+        "text" => "🚫 *Acesso negado!*\n\nEste bot é exclusivo para usuários autorizados.\nEntre em contato com o suporte: @RibeiroDo171",
+        "parse_mode" => "Markdown"
+    ]);
+    exit;
+}
     $partes = explode(" ", $texto);
     if (isset($partes[1])) {
         $numero = preg_replace("/[^0-9]/", "", $partes[1]);
