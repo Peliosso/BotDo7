@@ -104,7 +104,7 @@ function tabela($dados) {
     $chat_id = $dados["chat_id"];
     $message_id = $dados["query_message_id"];
 
-    $txt = "*🕵️ PLANO INDIVIDUAL*\n\n*💰 PREÇOS:*\n*1 SEMANA = R$100,00*\n\n⚠ *Apenas no privado com o bot!*";
+    $txt = "*🕵️ PLANO INDIVIDUAL*\n\n*💰 PREÇOS:*\n*1 SEMANA = R$10,00*\n\n⚠ *Também ganha no seu grupo!*";
 
     $button[] = ['text'=>"1 SEMANA", "callback_data" => "kkk"];
     $button[] = ['text'=>"Voltar", "callback_data" => "start"];
