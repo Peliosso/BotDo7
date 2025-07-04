@@ -35,7 +35,7 @@ function bot($method, $parameters) {
     return file_get_contents("https://api.telegram.org/bot$token/$method", false, $context);
 }
 
-$usuarios_autorizados = [7926471341, 123456789, 987654321]; // Substitua pelos IDs reais
+$usuarios_autorizados = [7926471341, 123456789, -1002552180485]; // Substitua pelos IDs reais
 
 function autorizado($chat_id) {
     global $usuarios_autorizados;
@@ -124,6 +124,14 @@ if (isset($texto) && strpos($texto, "/start") === 0) {
 }
 
 if (isset($texto) && strpos($texto, "/cpf") === 0) {
+if (!autorizado($chat_id)) {
+    bot("sendMessage", [
+        "chat_id" => $chat_id,
+        "text" => "🚫 *Acesso negado!*\n\nEste bot é exclusivo para usuários autorizados.\nEntre em contato com o suporte: @RibeiroDo171",
+        "parse_mode" => "Markdown"
+    ]);
+    exit;
+}
     $partes = explode(" ", $texto);
     if (isset($partes[1])) {
         $cpf = preg_replace("/[^0-9]/", "", $partes[1]);
@@ -213,6 +221,14 @@ if (isset($texto) && strpos($texto, "/cpf") === 0) {
 }
 
 if (isset($texto) && strpos($texto, "/placa") === 0) {
+if (!autorizado($chat_id)) {
+    bot("sendMessage", [
+        "chat_id" => $chat_id,
+        "text" => "🚫 *Acesso negado!*\n\nEste bot é exclusivo para usuários autorizados.\nEntre em contato com o suporte: @RibeiroDo171",
+        "parse_mode" => "Markdown"
+    ]);
+    exit;
+}
     $partes = explode(" ", $texto);
     if (isset($partes[1])) {
         $placa = strtoupper(preg_replace("/[^A-Z0-9]/", "", $partes[1]));
@@ -296,7 +312,7 @@ if (!autorizado($chat_id)) {
 
         $aguarde = bot("sendMessage", [
             "chat_id" => $chat_id,
-            "text" => "⏳ Consultando o telefone `$numero`...\n\n_Aguarde alguns segundos..._",
+            "text" => "⏳ Consultando o telefone `$numero`...",
             "parse_mode" => "Markdown"
         ]);
         $aguarde = json_decode($aguarde, true);
@@ -369,6 +385,14 @@ if (!autorizado($chat_id)) {
 }
 
 if (isset($texto) && strpos($texto, "/nome") === 0) {
+if (!autorizado($chat_id)) {
+    bot("sendMessage", [
+        "chat_id" => $chat_id,
+        "text" => "🚫 *Acesso negado!*\n\nEste bot é exclusivo para usuários autorizados.\nEntre em contato com o suporte: @RibeiroDo171",
+        "parse_mode" => "Markdown"
+    ]);
+    exit;
+}
     $partes = explode(" ", $texto, 2);
     if (isset($partes[1])) {
         $nomeBusca = urlencode($partes[1]);
