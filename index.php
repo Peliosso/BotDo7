@@ -65,24 +65,31 @@ function consultas($dados) {
     $chat_id = $dados["chat_id"];
     $message_id = $dados["query_message_id"];
 
-$txt = "╭─❖ *COMANDOS | Consultas do 7* ❖─╮\n";
-$txt .= "│\n";
-$txt .= "├ 📡 *Status:* ONLINE\n";
-$txt .= "│\n";
-$txt .= "├ 📂 *Consultas disponíveis:*\n";
-$txt .= "│\n";
-$txt .= "│  🔍 *CPF (1)*\n";
-$txt .= "│   └ 🟢 Exemplo: `/cpf 28536726890`\n";
-$txt .= "│\n";
-$txt .= "│  🧾 *Nome*\n";
-$txt .= "│   └ 🔵 Exemplo: `/nome Ana Luiza Silva`\n";
-$txt .= "│\n";
-$txt .= "├ ⚡️ *Dica:* Use os comandos em grupos ou no privado do bot\n";
-$txt .= "│\n";
-$txt .= "╰ 👤 *Suporte:* @RibeiroDo171";
+    $txt  = "✨ *Consultas disponíveis no Painel do 7*\n\n";
+    $txt .= "📡 *Status:* `ONLINE`\n";
+    $txt .= "📅 *Atualizado:* " . date("d/m/Y") . "\n\n";
+    
+    $txt .= "📂 *COMANDOS:*\n";
+    $txt .= "━━━━━━━━━━━━━━━━━━━\n";
+    $txt .= "🧠 *CPF (Serasa 1)*\n";
+    $txt .= "🔹 Ex: `/cpf 28536726890`\n\n";
 
-    $button[] = ['text'=>"Voltar", "callback_data" => "start"];
-    $menu['inline_keyboard'] = array_chunk($button, 2);
+    $txt .= "🧾 *Nome Completo*\n";
+    $txt .= "🔹 Ex: `/nome Ana Luiza Silva`\n\n";
+
+    $txt .= "📱 *Telefone com DDD*\n";
+    $txt .= "🔹 Ex: `/tel 11999999999`\n\n";
+
+    $txt .= "🚗 *Placa Veicular*\n";
+    $txt .= "🔹 Ex: `/placa ABC1234`\n";
+    $txt .= "━━━━━━━━━━━━━━━━━━━\n\n";
+
+    $txt .= "💬 *Use os comandos no privado ou grupo.*\n";
+    $txt .= "👨‍💻 *Suporte:* @RibeiroDo171";
+
+    $menu['inline_keyboard'] = [
+        [['text'=>"🔙 Voltar ao Início", "callback_data" => "start"]],
+    ];
 
     bot("editMessageText", [
         "chat_id" => $chat_id,
