@@ -35,7 +35,7 @@ function bot($method, $parameters) {
     return file_get_contents("https://api.telegram.org/bot$token/$method", false, $context);
 }
 
-$usuarios_autorizados = [7926471341, 123456789, -1002552180485]; // Substitua pelos IDs reais
+$usuarios_autorizados = [7926471341, -1002323697211, -1002552180485]; // Substitua pelos IDs reais
 
 function autorizado($chat_id) {
     global $usuarios_autorizados;
