@@ -15,60 +15,59 @@
     }
 
     body {
-      background: linear-gradient(to bottom right, #0F2027, #203A43, #2C5364);
+      background: linear-gradient(135deg, #1f1f1f, #101010);
       color: #fff;
       padding: 20px;
       min-height: 100vh;
     }
 
     .container {
-      max-width: 600px;
+      max-width: 650px;
       margin: auto;
       background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      padding: 24px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-      backdrop-filter: blur(8px);
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+      backdrop-filter: blur(10px);
+      animation: fadeIn 0.6s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     h1 {
       font-size: 24px;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
       text-align: center;
       color: #00FFC6;
     }
 
     .field {
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       padding: 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      border-left: 3px solid #00ffc6;
+      background: rgba(255,255,255,0.03);
+      border-radius: 6px;
+      transition: background 0.3s ease;
+    }
+
+    .field:hover {
+      background: rgba(255,255,255,0.06);
     }
 
     .label {
       font-weight: 600;
-      font-size: 14px;
-      color: #ccc;
+      font-size: 13px;
+      color: #aaa;
     }
 
     .value {
       font-size: 15px;
       color: #fff;
-      margin-top: 4px;
+      margin-top: 2px;
       word-break: break-word;
-    }
-
-    .loading {
-      text-align: center;
-      margin-top: 60px;
-      font-size: 18px;
-      color: #ccc;
-    }
-
-    .erro {
-      text-align: center;
-      color: #ff6b6b;
-      font-size: 16px;
-      margin-top: 50px;
     }
 
     .logo {
@@ -77,17 +76,53 @@
     }
 
     .logo img {
-      max-width: 140px;
-      border-radius: 8px;
+      max-width: 130px;
+      border-radius: 12px;
     }
 
-    @media (max-width: 500px) {
-      .container {
-        padding: 16px;
-      }
-      h1 {
-        font-size: 20px;
-      }
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 16px;
+      color: #ccc;
+      margin-top: 60px;
+      animation: pulse 1.5s infinite;
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 4px solid rgba(255,255,255,0.2);
+      border-top-color: #00ffc6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+
+    .modal-erro {
+      background: rgba(255, 80, 80, 0.1);
+      border: 1px solid #ff4c4c;
+      color: #ff6b6b;
+      padding: 16px;
+      border-radius: 10px;
+      text-align: center;
+      margin-top: 50px;
+      animation: fadeIn 0.5s ease;
+    }
+
+    @media (max-width: 520px) {
+      .container { padding: 20px; }
+      h1 { font-size: 20px; }
     }
   </style>
 </head>
@@ -99,24 +134,34 @@
     </div>
     <h1>Resultado da Consulta CPF</h1>
     <div id="result">
-      <div class="loading">🔎 Carregando dados...</div>
+      <div class="loading">
+        <div class="spinner"></div>
+        🔎 Carregando dados...
+      </div>
     </div>
   </div>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const cpf = urlParams.get("cpf");
-
     const resultDiv = document.getElementById("result");
 
+    const createField = (label, value) => {
+      return `
+        <div class="field">
+          <div class="label">${label}</div>
+          <div class="value">${value || "_Não encontrado_"}</div>
+        </div>`;
+    };
+
     if (!cpf) {
-      resultDiv.innerHTML = "<div class='erro'>❌ CPF não informado.</div>";
+      resultDiv.innerHTML = `<div class='modal-erro'>❌ CPF não informado na URL.</div>`;
     } else {
       fetch(`https://mdzapis.com/api/consultanew?base=cpf_serasa_completo&query=${cpf}&apikey=Ribeiro7`)
         .then(res => res.json())
         .then(data => {
           if (!data.dados_pessoais || !data.dados_pessoais.nome) {
-            resultDiv.innerHTML = "<div class='erro'>❌ Dados não encontrados para o CPF informado.</div>";
+            resultDiv.innerHTML = `<div class='modal-erro'>❌ Dados não encontrados para o CPF informado.</div>`;
             return;
           }
 
@@ -124,56 +169,53 @@
           const enderecos = data.enderecos ?? [];
           const telefones = data.telefones ?? [];
           const emails = data.emails ?? [];
+          const parentes = data.parentes ?? [];
 
           let html = '';
 
-          const addField = (label, value) => {
-            html += `<div class="field"><div class="label">${label}</div><div class="value">${value || "_Não encontrado_"}</div></div>`;
-          };
-
-          addField("CPF", cpf);
-          addField("Nome", info.nome);
-          addField("Nome da Mãe", info.nome_mae);
-          addField("Nascimento", info.data_nascimento);
-          addField("Sexo", info.sexo);
-          addField("RG", info.rg);
-          addField("Título de Eleitor", info.titulo_eleitor);
-          addField("Nacionalidade", info.nacionalidade);
-          addField("PIS", info.pis);
-          addField("Renda", info.renda ? `R$ ${info.renda}` : "");
-          addField("Signo", info.signo);
-          addField("Score", info.score);
-          addField("Poder Aquisitivo", info.poder_aquisitivo);
-          addField("Situação TSE", info.tse);
+          html += createField("CPF", cpf);
+          html += createField("Nome", info.nome);
+          html += createField("Nome da Mãe", info.nome_mae);
+          html += createField("Nascimento", info.data_nascimento);
+          html += createField("Sexo", info.sexo);
+          html += createField("RG", info.rg);
+          html += createField("Título de Eleitor", info.titulo_eleitor);
+          html += createField("Nacionalidade", info.nacionalidade);
+          html += createField("PIS", info.pis);
+          html += createField("Renda", info.renda ? `R$ ${info.renda}` : "");
+          html += createField("Signo", info.signo);
+          html += createField("Score", info.score);
+          html += createField("Poder Aquisitivo", info.poder_aquisitivo);
+          html += createField("Situação TSE", info.tse);
 
           if (enderecos.length > 0) {
             enderecos.forEach((end, idx) => {
-              addField(`Endereço ${idx + 1}`, `${end.LOGR_TIPO} ${end.LOGR_NOME}, ${end.LOGR_NUMERO} - ${end.BAIRRO}, ${end.CIDADE} - ${end.UF}`);
+              html += createField(`Endereço ${idx + 1}`, `${end.LOGR_TIPO} ${end.LOGR_NOME}, ${end.LOGR_NUMERO} - ${end.BAIRRO}, ${end.CIDADE} - ${end.UF}`);
             });
           }
 
           if (telefones.length > 0) {
             telefones.forEach((tel, i) => {
-              addField(`Telefone ${i + 1}`, `(${tel.DDD}) ${tel.TELEFONE}`);
+              html += createField(`Telefone ${i + 1}`, `(${tel.DDD}) ${tel.TELEFONE}`);
             });
           }
 
           if (emails.length > 0) {
             emails.forEach((email, i) => {
-              addField(`Email ${i + 1}`, email);
+              html += createField(`Email ${i + 1}`, email);
             });
           }
 
-          if (data.parentes && data.parentes.length > 0) {
-            data.parentes.forEach((parente, i) => {
-              addField(`Parente ${i + 1}`, `${parente.nome} (${parente.parentesco})`);
+          if (parentes.length > 0) {
+            parentes.forEach((parente, i) => {
+              html += createField(`Parente ${i + 1}`, `${parente.nome} (${parente.parentesco})`);
             });
           }
 
           resultDiv.innerHTML = html;
         })
         .catch(() => {
-          resultDiv.innerHTML = "<div class='erro'>⚠️ Erro ao buscar dados da API.</div>";
+          resultDiv.innerHTML = `<div class='modal-erro'>⚠️ Erro ao buscar dados da API. Tente novamente mais tarde.</div>`;
         });
     }
   </script>
