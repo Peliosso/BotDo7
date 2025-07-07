@@ -203,13 +203,23 @@ if (!autorizado($chat_id)) {
                 ]
             ];
 
-            bot("editMessageText", [
-                "chat_id" => $chat_id,
-                "message_id" => $msg_id_aguarde,
-                "text" => $txt,
-                "reply_markup" => $botoes,
-                "parse_mode" => "Markdown"
-            ]);
+            bot("deleteMessage", [
+    "chat_id" => $chat_id,
+    "message_id" => $msg_id_aguarde
+]);
+
+bot("sendMessage", [
+    "chat_id" => $chat_id,
+    "text" => "✅ *Consulta encontrada para:* `$cpf`\n\nClique no botão abaixo para visualizar os dados completos no MiniApp:",
+    "reply_markup" => [
+        "inline_keyboard" => [
+            [
+                ['text' => '✅ • Ver Consulta', 'web_app' => ['url' => "https://botdo7.onrender.com/miniapp/cpf.html?cpf={$cpf}"]]
+            ]
+        ]
+    ],
+    "parse_mode" => "Markdown"
+]);
         } else {
             bot("editMessageText", [
                 "chat_id" => $chat_id,
