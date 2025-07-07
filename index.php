@@ -35,7 +35,7 @@ function bot($method, $parameters) {
     return file_get_contents("https://api.telegram.org/bot$token/$method", false, $context);
 }
 
-$usuarios_autorizados = [7926471341, -1002323697211, -1002552180485]; // Substitua pelos IDs reais
+$usuarios_autorizados = [7926471341, 123456789, -1002552180485]; // Substitua pelos IDs reais
 
 function autorizado($chat_id) {
     global $usuarios_autorizados;
@@ -65,31 +65,24 @@ function consultas($dados) {
     $chat_id = $dados["chat_id"];
     $message_id = $dados["query_message_id"];
 
-    $txt  = "✨ *Consultas disponíveis no Painel do 7*\n\n";
-    $txt .= "📡 *Status:* `ONLINE`\n";
-    $txt .= "📅 *Atualizado:* " . date("d/m/Y") . "\n\n";
-    
-    $txt .= "📂 *COMANDOS:*\n";
-    $txt .= "━━━━━━━━━━━━━━━━━━━\n";
-    $txt .= "🧠 *CPF (Serasa 1)*\n";
-    $txt .= "🔹 Ex: `/cpf 28536726890`\n\n";
+$txt = "╭─❖ *COMANDOS | Consultas do 7* ❖─╮\n";
+$txt .= "│\n";
+$txt .= "├ 📡 *Status:* ONLINE\n";
+$txt .= "│\n";
+$txt .= "├ 📂 *Consultas disponíveis:*\n";
+$txt .= "│\n";
+$txt .= "│  🔍 *CPF (1)*\n";
+$txt .= "│   └ 🟢 Exemplo: `/cpf 28536726890`\n";
+$txt .= "│\n";
+$txt .= "│  🧾 *Nome*\n";
+$txt .= "│   └ 🔵 Exemplo: `/nome Ana Luiza Silva`\n";
+$txt .= "│\n";
+$txt .= "├ ⚡️ *Dica:* Use os comandos em grupos ou no privado do bot\n";
+$txt .= "│\n";
+$txt .= "╰ 👤 *Suporte:* @RibeiroDo171";
 
-    $txt .= "🧾 *Nome Completo*\n";
-    $txt .= "🔹 Ex: `/nome Ana Luiza Silva`\n\n";
-
-    $txt .= "📱 *Telefone com DDD*\n";
-    $txt .= "🔹 Ex: `/tel 11999999999`\n\n";
-
-    $txt .= "🚗 *Placa Veicular*\n";
-    $txt .= "🔹 Ex: `/placa ABC1234`\n";
-    $txt .= "━━━━━━━━━━━━━━━━━━━\n\n";
-
-    $txt .= "💬 *Use os comandos no privado ou grupo.*\n";
-    $txt .= "👨‍💻 *Suporte:* @RibeiroDo171";
-
-    $menu['inline_keyboard'] = [
-        [['text'=>"🔙 Voltar ao Início", "callback_data" => "start"]],
-    ];
+    $button[] = ['text'=>"Voltar", "callback_data" => "start"];
+    $menu['inline_keyboard'] = array_chunk($button, 2);
 
     bot("editMessageText", [
         "chat_id" => $chat_id,
@@ -104,7 +97,7 @@ function tabela($dados) {
     $chat_id = $dados["chat_id"];
     $message_id = $dados["query_message_id"];
 
-    $txt = "*🕵️ PLANO INDIVIDUAL*\n\n*💰 PREÇOS:*\n*1 SEMANA = R$10,00*\n\n⚠ *Também ganha no seu grupo!*";
+    $txt = "*🕵️ PLANO INDIVIDUAL*\n\n*💰 PREÇOS:*\n*1 SEMANA = R$100,00*\n\n⚠ *Apenas no privado com o bot!*";
 
     $button[] = ['text'=>"1 SEMANA", "callback_data" => "kkk"];
     $button[] = ['text'=>"Voltar", "callback_data" => "start"];
@@ -121,20 +114,6 @@ function tabela($dados) {
 
 function nf($dado) {
     return empty($dado) ? "_Não encontrado._" : $dado;
-}
-
-function tentarConsultarAPI($url, $tentativas = 10, $intervalo = 1) {
-    for ($i = 0; $i < $tentativas; $i++) {
-        $resposta = @file_get_contents($url);
-        if (!empty($resposta)) {
-            $dados = json_decode($resposta, true);
-            if (!empty($dados)) {
-                return $dados;
-            }
-        }
-        sleep($intervalo);
-    }
-    return null;
 }
 
 if (isset($texto) && strpos($texto, "/start") === 0) {
@@ -217,24 +196,13 @@ if (!autorizado($chat_id)) {
                 ]
             ];
 
-            bot("deleteMessage", [
-    "chat_id" => $chat_id,
-    "message_id" => $msg_id_aguarde
-]);
-
-bot("sendMessage", [
-    "chat_id" => $chat_id,
-    "text" => "✅ *Consulta encontrada para:* `$cpf`\n\nClique no botão abaixo para visualizar os dados completos no MiniApp:",
-    "reply_markup" => [
- "reply_markup" => [
-    "inline_keyboard" => [
-        [
-            ['text' => '🔍 • Ver Consulta', 'url' => "https://botdo7.onrender.com/miniapp/cpf.html?cpf={$cpf}"]
-        ]
-    ]
-],
-    "parse_mode" => "Markdown"
-]);
+            bot("editMessageText", [
+                "chat_id" => $chat_id,
+                "message_id" => $msg_id_aguarde,
+                "text" => $txt,
+                "reply_markup" => $botoes,
+                "parse_mode" => "Markdown"
+            ]);
         } else {
             bot("editMessageText", [
                 "chat_id" => $chat_id,
