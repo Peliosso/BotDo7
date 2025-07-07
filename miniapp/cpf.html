@@ -1,1 +1,38 @@
-a
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Retorno CPF - Joker Search Bot</title>
+  <script>
+    async function buscarDados() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const cpf = urlParams.get('cpf');
+
+      if (!cpf) {
+        document.getElementById("conteudo").innerHTML = "<p>CPF não informado!</p>";
+        return;
+      }
+
+      const response = await fetch(`https://mdzapis.com/api/consultanew?base=cpf_serasa_completo&query=${cpf}&apikey=Ribeiro7`);
+      const dados = await response.json();
+
+      if (dados?.dados_pessoais?.nome) {
+        document.getElementById("conteudo").innerHTML = `
+          <h3>Resultado para: ${cpf}</h3>
+          <p><strong>Nome:</strong> ${dados.dados_pessoais.nome}</p>
+          <p><strong>Mãe:</strong> ${dados.dados_pessoais.nome_mae}</p>
+          <p><strong>Nascimento:</strong> ${dados.dados_pessoais.data_nascimento}</p>
+          <p><strong>Sexo:</strong> ${dados.dados_pessoais.sexo}</p>
+        `;
+      } else {
+        document.getElementById("conteudo").innerHTML = "<p>❌ Nenhuma informação encontrada.</p>";
+      }
+    }
+
+    window.onload = buscarDados;
+  </script>
+</head>
+<body>
+  <div id="conteudo">Carregando...</div>
+</body>
+</html>
