@@ -166,7 +166,8 @@ if (!autorizado($chat_id)) {
         $msg_id_aguarde = $aguarde['result']['message_id'];
 
         $apiUrl = "https://mdzapis.com/api/consultanew?base=cpf_serasa_completo&query={$cpf}&apikey=Ribeiro7";
-   $dados = tentarConsultarAPI($apiUrl);
+        $resposta = file_get_contents($apiUrl);
+        $dados = json_decode($resposta, true);
 
         if (isset($dados["dados_pessoais"]["nome"])) {
             $info = $dados["dados_pessoais"];
