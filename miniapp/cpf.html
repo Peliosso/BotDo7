@@ -70,14 +70,9 @@
       word-break: break-word;
     }
 
-    .logo {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .logo img {
-      max-width: 130px;
-      border-radius: 12px;
+    .value.nao-encontrado {
+      color: #888;
+      font-style: italic;
     }
 
     .loading {
@@ -120,6 +115,22 @@
       animation: fadeIn 0.5s ease;
     }
 
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .footer a {
+      color: #00ffc6;
+      text-decoration: none;
+      font-weight: 600;
+      transition: 0.3s;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
     @media (max-width: 520px) {
       .container { padding: 20px; }
       h1 { font-size: 20px; }
@@ -129,15 +140,15 @@
 <body>
 
   <div class="container" id="app">
-    <div class="logo">
-      <img src="https://i.imgur.com/1U7k1tN.png" alt="Métodos do 7">
-    </div>
     <h1>Resultado da Consulta CPF</h1>
     <div id="result">
       <div class="loading">
         <div class="spinner"></div>
         🔎 Carregando dados...
       </div>
+    </div>
+    <div class="footer">
+      🔐 <a href="https://t.me/RibeiroDo171" target="_blank">Adquirir Plano no Bot</a>
     </div>
   </div>
 
@@ -147,10 +158,13 @@
     const resultDiv = document.getElementById("result");
 
     const createField = (label, value) => {
+      const isMissing = !value || value === "" || value === "null";
       return `
         <div class="field">
           <div class="label">${label}</div>
-          <div class="value">${value || "_Não encontrado_"}</div>
+          <div class="value ${isMissing ? "nao-encontrado" : ""}">
+            ${isMissing ? "Não encontrado" : value}
+          </div>
         </div>`;
     };
 
