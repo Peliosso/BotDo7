@@ -123,6 +123,20 @@ function nf($dado) {
     return empty($dado) ? "_Não encontrado._" : $dado;
 }
 
+function tentarConsultarAPI($url, $tentativas = 10, $intervalo = 1) {
+    for ($i = 0; $i < $tentativas; $i++) {
+        $resposta = @file_get_contents($url);
+        if (!empty($resposta)) {
+            $dados = json_decode($resposta, true);
+            if (!empty($dados)) {
+                return $dados;
+            }
+        }
+        sleep($intervalo);
+    }
+    return null;
+}
+
 if (isset($texto) && strpos($texto, "/start") === 0) {
     start([
         "chat_id" => $chat_id,
@@ -152,8 +166,7 @@ if (!autorizado($chat_id)) {
         $msg_id_aguarde = $aguarde['result']['message_id'];
 
         $apiUrl = "https://mdzapis.com/api/consultanew?base=cpf_serasa_completo&query={$cpf}&apikey=Ribeiro7";
-        $resposta = file_get_contents($apiUrl);
-        $dados = json_decode($resposta, true);
+   $dados = tentarConsultarAPI($apiUrl);
 
         if (isset($dados["dados_pessoais"]["nome"])) {
             $info = $dados["dados_pessoais"];
