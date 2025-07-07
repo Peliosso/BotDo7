@@ -226,12 +226,13 @@ bot("sendMessage", [
     "chat_id" => $chat_id,
     "text" => "✅ *Consulta encontrada para:* `$cpf`\n\nClique no botão abaixo para visualizar os dados completos no MiniApp:",
     "reply_markup" => [
-        "inline_keyboard" => [
-            [
-                ['text' => '✅ • Ver Consulta', 'web_app' => ['url' => "https://botdo7.onrender.com/miniapp/cpf.html?cpf={$cpf}"]]
-            ]
+ "reply_markup" => [
+    "inline_keyboard" => [
+        [
+            ['text' => '🔍 • Ver Consulta', 'url' => "https://botdo7.onrender.com/miniapp/cpf.html?cpf={$cpf}"]
         ]
-    ],
+    ]
+],
     "parse_mode" => "Markdown"
 ]);
         } else {
